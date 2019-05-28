@@ -254,7 +254,6 @@ class AuthSettingsController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 * @NoSubadminRequired
-	 * @PasswordConfirmationRequired
 	 *
 	 * @param int $id
 	 * @return JSONResponse

@@ -34,10 +34,20 @@
 
 <script>
 	import Axios from 'nextcloud-axios';
-	import confirmPassword from 'nextcloud-password-confirmation';
 
 	import AuthTokenList from './AuthTokenList';
 	import AuthTokenSetupDialogue from './AuthTokenSetupDialogue';
+
+	const confirm = () => {
+		return new Promise(res => {
+			OC.dialogs.confirm(
+				t('core', 'Do you really want to wipe your data from this device?'),
+				t('core', 'Confirm wipe'),
+				res,
+				true
+			)
+		})
+	}
 
 	/**
 	 * Tap into a promise without losing the value
@@ -135,22 +145,22 @@
 						this.tokens.push(token);
 					})
 			},
-			wipeToken(token) {
+			async wipeToken(token) {
 				console.debug('wiping app token', token);
 
-				confirmPassword()
-					.then(() => Axios.post(this.baseUrl + '/wipe/' + token.id))
-					.then(tap(() => {
-						console.debug('app token marked for wipe')
+				try {
+					if (!(await confirm())) {
+						console.debug('wipe aborted by user')
+						return;
+					}
+					await Axios.post(this.baseUrl + '/wipe/' + token.id)
+					console.debug('app token marked for wipe')
 
-						// Update the type
-						// TODO: refactor the server-side code to return the updated token
-						token.type = 2;
-					}))
-					.catch(err => {
-						console.error.bind('could not wipe app token', err);
-						OC.Notification.showTemporary(t('core', 'Error while wiping the device with the token'));
-					})
+					token.type = 2;
+				} catch (err) {
+					console.error('could not wipe app token', err);
+					OC.Notification.showTemporary(t('core', 'Error while wiping the device with the token'));
+				}
 			}
 		}
 	}
